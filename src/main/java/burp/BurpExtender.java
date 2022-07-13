@@ -18,6 +18,7 @@ public class BurpExtender implements IScannerCheck,IBurpExtender {
     private PrintWriter stderr;
     private ContentPathDict contentPathDict;
     private String lastContentPath = "";
+    private String[] staticSuffix = {".js",".gif",".jpg",".png",".css",".json",".woff",".bmp"};
 
     public void registerExtenderCallbacks(IBurpExtenderCallbacks callbacks) {
         this.callbacks = callbacks;
@@ -53,10 +54,17 @@ public class BurpExtender implements IScannerCheck,IBurpExtender {
         String contentPath = ContentPathParser.parse(requestPath);
 
         // 已经存在
-        if(lastContentPath.equals(contentPath) || contentPathDict.hasValue(contentPath)) {
+        if(contentPath == null || lastContentPath.equals(contentPath) || contentPathDict.hasValue(contentPath)) {
             return null;
         }
         try {
+            lastContentPath = contentPath;
+            // 后缀过滤 js,gif,jpg,png,css,json,woff,bmp
+            for(String suffix : staticSuffix) {
+                if(contentPath.endsWith(suffix)) {
+                    return null;
+                }
+            }
             contentPathDict.addDict(contentPath);
             stdout.println(contentPath + " add success");
         } catch (IOException e) {
